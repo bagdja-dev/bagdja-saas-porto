@@ -51,18 +51,20 @@ BEGIN
   )
   FROM (
     SELECT 
-      id, title, slug, description, excerpt, 
-      tech_stack, image, demo_url, github_url, 
-      "order", created_at 
-    FROM public.projects 
-    WHERE user_id = v_user_id 
-      AND published = true
+      prj.id, prj.title, prj.slug, prj.description, prj.excerpt, 
+      prj.tech_stack, prj.image, prj.demo_url, prj.github_url, 
+      prj."order", prj.created_at,
+      '/' || port.slug || '/project/' || prj.slug as "project_url"
+    FROM public.projects prj
+    JOIN public.portfolios port ON port.user_id = prj.user_id
+    WHERE prj.user_id = v_user_id 
+      AND prj.published = true
       AND (
         p_search = '' OR 
-        title ILIKE '%' || p_search || '%' OR 
-        description ILIKE '%' || p_search || '%'
+        prj.title ILIKE '%' || p_search || '%' OR 
+        prj.description ILIKE '%' || p_search || '%'
       )
-    ORDER BY "order" ASC
+    ORDER BY prj."order" ASC
     LIMIT p_size
     OFFSET v_offset
   ) pr INTO v_result;
@@ -125,18 +127,20 @@ BEGIN
   )
   FROM (
     SELECT 
-      id, title, slug, excerpt, content, 
-      cover_image, created_at, updated_at 
-    FROM public.blog_posts 
-    WHERE user_id = v_user_id 
-      AND published = true
+      blg.id, blg.title, blg.slug, blg.excerpt, blg.content, 
+      blg.cover_image, blg.created_at, blg.updated_at,
+      '/' || port.slug || '/blog/' || blg.slug as "blog_url"
+    FROM public.blog_posts blg
+    JOIN public.portfolios port ON port.user_id = blg.user_id
+    WHERE blg.user_id = v_user_id 
+      AND blg.published = true
       AND (
         p_search = '' OR 
-        title ILIKE '%' || p_search || '%' OR 
-        excerpt ILIKE '%' || p_search || '%' OR
-        content ILIKE '%' || p_search || '%'
+        blg.title ILIKE '%' || p_search || '%' OR 
+        blg.excerpt ILIKE '%' || p_search || '%' OR
+        blg.content ILIKE '%' || p_search || '%'
       )
-    ORDER BY created_at DESC
+    ORDER BY blg.created_at DESC
     LIMIT p_size
     OFFSET v_offset
   ) b INTO v_result;

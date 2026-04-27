@@ -241,33 +241,34 @@ const TenantProjectDetail = () => {
           <div className="lg:col-span-1">
             <div className="sticky top-8">
               {/* Project Actions */}
-              <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 mb-6">
-                <h3 className="text-xl font-bold mb-4">Project Links</h3>
-                <div className="space-y-3">
-                  {project.demo_url && (
-                    <a
-                      href={project.demo_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-medium"
-                    >
-                      <FiExternalLink size={18} />
-                      View Live Demo
-                    </a>
-                  )}
-                  {project.github_url && (
-                    <a
-                      href={project.github_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-800 hover:bg-gray-900 text-white rounded-lg transition-colors font-medium"
-                    >
-                      <FiGithub size={18} />
-                      View Source Code
-                    </a>
-                  )}
-                </div>
-              </div>
+              {project.demo_url || project.github_url && (
+                (<div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 mb-6">
+                  <h3 className="text-xl font-bold mb-4">Project Links</h3>
+                  <div className="space-y-3">
+                    {project.demo_url && (
+                      <a
+                        href={project.demo_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors font-medium"
+                      >
+                        <FiExternalLink size={18} />
+                        View Live Demo
+                      </a>
+                    )}
+                    {project.github_url && (
+                      <a
+                        href={project.github_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full py-3 px-4 bg-gray-800 hover:bg-gray-900 text-white rounded-lg transition-colors font-medium"
+                      >
+                        <FiGithub size={18} />
+                        View Source Code
+                      </a>
+                    )}
+                  </div>
+                </div>))}
 
               {/* Project Details */}
               <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-6 mb-6">
