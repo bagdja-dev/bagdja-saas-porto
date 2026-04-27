@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { FiSave, FiExternalLink, FiUser, FiMail, FiShare2, FiCode, FiFileText, FiUpload, FiX, FiDroplet } from 'react-icons/fi';
+import { FiSave, FiExternalLink, FiUser, FiMail, FiShare2, FiCode, FiFileText, FiUpload, FiX, FiDroplet, FiLink, FiKey, FiTrash2, FiPlus, FiCopy, FiCheck, FiInfo } from 'react-icons/fi';
 import { supabase } from '../../services/supabase';
 import BackButton from '../../components/BackButton';
 import AdminNavbar from '../../components/AdminNavbar';
@@ -34,12 +34,19 @@ const Settings = () => {
   const [textSecondary, setTextSecondary] = useState('#6b7280');
   const [bgLight, setBgLight] = useState('#ffffff');
   const [bgDark, setBgDark] = useState('#111827');
+  const [apiKeys, setApiKeys] = useState([]);
+  const [loadingKeys, setLoadingKeys] = useState(false);
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [copiedKey, setCopiedKey] = useState(null);
+  const [testResponse, setTestResponse] = useState(null);
+  const [testingKey, setTestingKey] = useState(null);
+  const [keyName, setKeyName] = useState('');
+  const [appName, setAppName] = useState('');
   const { register, handleSubmit, reset, formState: { errors }, watch, setValue } = useForm();
   const alert = useAlert();
   const { user } = useAuth();
 
   const slug = watch('slug');
-  const username = watch('username');
   
   // Portfolio URLs
   const portfolioUrl = slug ? `${window.location.origin}/${slug}` : '';
@@ -53,6 +60,7 @@ const Settings = () => {
     { id: 'theme', label: 'Theme & Colors', icon: FiDroplet },
     { id: 'domain', label: 'Custom Domain', icon: FiExternalLink },
     { id: 'seo', label: 'SEO', icon: FiFileText },
+    { id: 'integration', label: 'Integration', icon: FiLink },
   ];
 
   useEffect(() => {
@@ -372,6 +380,118 @@ const Settings = () => {
       setLoading(false);
     }
   };
+
+  const fetchApiKeys = async () => {
+    if (!user) return;
+    setLoadingKeys(true);
+    try {
+      const { data, error } = await supabase
+        .from('api_keys')
+        .select('*')
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setApiKeys(data || []);
+    } catch (error) {
+      console.error('Error fetching API keys:', error);
+      alert.error('Failed to fetch API keys');
+    } finally {
+      setLoadingKeys(false);
+    }
+  };
+
+  const generateApiKey = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let result = 'pk_';
+    for (let i = 0; i < 32; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const handleCreateApiKey = async () => {
+    if (!keyName || !appName) {
+      alert.error('Name and App Name are required');
+      return;
+    }
+
+    setCreatingKey(true);
+    try {
+      const newKey = {
+        user_id: user.id,
+        name: keyName,
+        app_name: appName,
+        key_value: generateApiKey(),
+      };
+
+      const { error } = await supabase
+        .from('api_keys')
+        .insert([newKey]);
+
+      if (error) throw error;
+      
+      alert.success('API Key created successfully!');
+      setKeyName('');
+      setAppName('');
+      fetchApiKeys();
+    } catch (error) {
+      console.error('Error creating API key:', error);
+      alert.error('Failed to create API key');
+    } finally {
+      setCreatingKey(false);
+    }
+  };
+
+  const handleDeleteApiKey = async (id) => {
+    if (!confirm('Are you sure you want to delete this API key? This action cannot be undone.')) return;
+
+    try {
+      const { error } = await supabase
+        .from('api_keys')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      alert.success('API Key deleted');
+      fetchApiKeys();
+    } catch (error) {
+      console.error('Error deleting API key:', error);
+      alert.error('Failed to delete API key');
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    setCopiedKey(text);
+    setTimeout(() => setCopiedKey(null), 2000);
+  };
+
+  const handleTestKey = async (apiKey) => {
+    setTestingKey(apiKey);
+    setTestResponse(null);
+    try {
+      const { data, error } = await supabase.rpc('get_complete_data_by_api_key', {
+        p_api_key: apiKey
+      });
+
+      if (error) throw error;
+      setTestResponse(data);
+      alert.success('API Connection successful!');
+    } catch (error) {
+      console.error('Error testing API key:', error);
+      alert.error('API Connection failed');
+    } finally {
+      setTestingKey(null);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'integration') {
+      fetchApiKeys();
+    }
+  }, [activeTab]);
 
   const onSubmit = async (data) => {
     setSaving(true);
@@ -1610,6 +1730,198 @@ const Settings = () => {
             </div>
           )}
 
+          {/* Integration Tab */}
+          {activeTab === 'integration' && (
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-xl font-bold mb-2">Integrations & API Keys</h2>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  Manage your API keys for third-party integrations
+                </p>
+              </div>
+
+              {/* Create API Key Form */}
+              <div className="p-6 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                  <FiPlus className="text-primary-600" />
+                  Create New API Key
+                </h3>
+                <div className="grid md:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Key Name</label>
+                    <input
+                      type="text"
+                      value={keyName}
+                      onChange={(e) => setKeyName(e.target.value)}
+                      className="input-field"
+                      placeholder="e.g. My Website Key"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">App Name</label>
+                    <input
+                      type="text"
+                      value={appName}
+                      onChange={(e) => setAppName(e.target.value)}
+                      className="input-field"
+                      placeholder="e.g. Portfolio App"
+                    />
+                  </div>
+                </div>
+                <button
+                   type="button"
+                   onClick={handleCreateApiKey}
+                  disabled={creatingKey}
+                  className="btn-primary flex items-center gap-2"
+                >
+                  {creatingKey ? 'Creating...' : (
+                    <>
+                      <FiKey /> Create API Key
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* API Keys Grid/Table */}
+              <div>
+                <h3 className="text-lg font-semibold mb-4">Your API Keys</h3>
+                {loadingKeys ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
+                    <p className="mt-2 text-gray-500">Loading API keys...</p>
+                  </div>
+                ) : apiKeys.length === 0 ? (
+                  <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-dashed border-gray-300 dark:border-gray-700">
+                    <FiKey className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+                    <p className="text-gray-500">No API keys found. Create one to get started.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse">
+                      <thead>
+                        <tr className="border-b border-gray-200 dark:border-gray-700">
+                          <th className="py-3 px-4 font-semibold text-sm">Name</th>
+                          <th className="py-3 px-4 font-semibold text-sm">App Name</th>
+                          <th className="py-3 px-4 font-semibold text-sm">API Key</th>
+                          <th className="py-3 px-4 font-semibold text-sm text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {apiKeys.map((key) => (
+                          <tr key={key.id} className="border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                            <td className="py-4 px-4 text-sm font-medium">{key.name}</td>
+                            <td className="py-4 px-4 text-sm text-gray-600 dark:text-gray-400">{key.app_name}</td>
+                            <td className="py-4 px-4 text-sm font-mono">
+                              <div className="flex items-center gap-2 bg-gray-100 dark:bg-gray-900 px-2 py-1 rounded w-fit">
+                                <span className="max-w-[150px] truncate">
+                                  {key.key_value}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => copyToClipboard(key.key_value)}
+                                  className="text-gray-500 hover:text-primary-600 transition-colors"
+                                  title="Copy to clipboard"
+                                >
+                                  {copiedKey === key.key_value ? <FiCheck className="text-green-500" /> : <FiCopy />}
+                                </button>
+                              </div>
+                            </td>
+                            <td className="py-4 px-4 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => handleTestKey(key.key_value)}
+                                  disabled={testingKey === key.key_value}
+                                  className="text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 p-2 rounded-lg transition-colors"
+                                  title="Test Connection"
+                                >
+                                  {testingKey === key.key_value ? (
+                                    <div className="animate-spin h-5 w-5 border-b-2 border-primary-600 rounded-full"></div>
+                                  ) : (
+                                    <FiCheck size={18} />
+                                  )}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteApiKey(key.id)}
+                                  className="text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 p-2 rounded-lg transition-colors"
+                                  title="Delete API Key"
+                                >
+                                  <FiTrash2 size={18} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+
+              {/* API Tester Result */}
+              {testResponse && (
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-lg font-semibold">Live Preview (JSON)</h3>
+                    <button 
+                      type="button"
+                      onClick={() => setTestResponse(null)}
+                      className="text-sm text-gray-500 hover:text-gray-700"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <pre className="p-4 bg-gray-900 text-green-400 rounded-xl overflow-auto max-h-96 text-xs font-mono">
+                    {JSON.stringify(testResponse, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              {/* Documentation Note */}
+              <div className="p-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl">
+                <h3 className="font-bold mb-3 text-blue-900 dark:text-blue-300 flex items-center gap-2">
+                  <FiInfo /> Bridge API Integration (Recommended)
+                </h3>
+                <div className="space-y-4 text-sm text-blue-800 dark:text-blue-300">
+                  <p>
+                    Gunakan endpoint ini untuk mengintegrasikan portfolio Anda dengan aplikasi pihak ketiga tanpa harus mengekspos kredensial Supabase secara langsung.
+                  </p>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <p className="font-semibold">Projects Endpoint:</p>
+                      <code className="block p-3 bg-blue-100 dark:bg-blue-900/40 rounded border border-blue-200 dark:border-blue-700 break-all font-mono">
+                        {`${window.location.origin}/api/v1/projects?key=YOUR_KEY&page=1&size=10&search=`}
+                      </code>
+                    </div>
+                    <div className="space-y-2">
+                      <p className="font-semibold">Blogs Endpoint:</p>
+                      <code className="block p-3 bg-blue-100 dark:bg-blue-900/40 rounded border border-blue-200 dark:border-blue-700 break-all font-mono">
+                        {`${window.location.origin}/api/v1/blogs?key=YOUR_KEY&page=1&size=10&search=`}
+                      </code>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="font-semibold text-xs uppercase tracking-wider">Example Usage with Pagination:</p>
+                    <pre className="p-3 bg-blue-100 dark:bg-blue-900/40 rounded border border-blue-200 dark:border-blue-700 overflow-x-auto whitespace-pre-wrap font-mono">
+{`curl -G "${window.location.origin}/api/v1/projects" \\
+  --data-urlencode "key=pk_your_key_here" \\
+  --data-urlencode "page=1" \\
+  --data-urlencode "size=5" \\
+  --data-urlencode "search=react"`}
+                    </pre>
+                  </div>
+
+                  <p className="text-xs opacity-75 mt-4">
+                    💡 <strong>Pro Tip:</strong> Gunakan parameter <code>&page=1&size=10</code> untuk pagination, dan <code>&search=keyword</code> untuk memfilter hasil.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* SEO Tab */}
           {activeTab === 'seo' && (
             <div className="space-y-6">
@@ -1677,26 +1989,28 @@ const Settings = () => {
           )}
 
           {/* Submit Button */}
-          <div className="pt-6 border-t border-gray-200 dark:border-gray-700 flex gap-4">
-            <button
-              type="submit"
-              disabled={saving}
-              className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <FiSave /> {saving ? 'Saving...' : portfolio ? 'Update Settings' : 'Create Portfolio'}
-            </button>
-            
-            {portfolio && slug && (
-              <a
-                href={`/${slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="btn-secondary flex items-center gap-2"
+          {activeTab !== 'integration' && (
+            <div className="pt-6 border-t border-gray-200 dark:border-gray-700 flex gap-4">
+              <button
+                type="submit"
+                disabled={saving}
+                className="btn-primary flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <FiExternalLink /> Preview Portfolio
-              </a>
-            )}
-          </div>
+                <FiSave /> {saving ? 'Saving...' : portfolio ? 'Update Settings' : 'Create Portfolio'}
+              </button>
+              
+              {portfolio && slug && (
+                <a
+                  href={`/${slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-secondary flex items-center gap-2"
+                >
+                  <FiExternalLink /> Preview Portfolio
+                </a>
+              )}
+            </div>
+          )}
         </form>
       </div>
     </div>
