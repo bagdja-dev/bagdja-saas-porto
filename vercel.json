@@ -1,4 +1,7 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "react-router",
+  "outputDirectory": "build",
   "rewrites": [
     {
       "source": "/sitemap.xml",
