@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useParams, Link, useLocation } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router';
 import { FiMail, FiLinkedin, FiTwitter, FiInstagram, FiGlobe, FiMapPin, FiPhone, FiDownload, FiBriefcase, FiClock, FiEye, FiHome, FiGithub } from 'react-icons/fi';
 import { supabase } from '../services/supabase';
 import ProjectCard from '../components/ProjectCard';

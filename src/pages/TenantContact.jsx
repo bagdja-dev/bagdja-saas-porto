@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { FiMail, FiPhone, FiMapPin, FiSend } from 'react-icons/fi';
 import { supabase } from '../services/supabase';

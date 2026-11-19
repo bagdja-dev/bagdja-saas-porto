@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { FiLogOut, FiUser, FiLayout } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import AdminThemeToggle from './AdminThemeToggle';

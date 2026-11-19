@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { supabase } from '../services/supabase';
 
 const Blog = () => {
@@ -106,4 +106,3 @@ const Blog = () => {
 };
 
 export default Blog;
-

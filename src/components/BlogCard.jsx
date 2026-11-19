@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { FiCalendar, FiClock, FiEye, FiArrowRight } from 'react-icons/fi';
 import { getTextPreview } from '../utils/textHelpers';
 
@@ -103,4 +103,3 @@ const BlogCard = ({ post, index = 0, baseUrl = '', themeColor = '#0284c7', showA
 };
 
 export default BlogCard;
-

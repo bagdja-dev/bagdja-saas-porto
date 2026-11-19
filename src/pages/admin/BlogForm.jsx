@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams, Link } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { FiSave, FiUpload, FiX, FiImage } from 'react-icons/fi';
 import { supabase } from '../../services/supabase';
@@ -396,4 +396,3 @@ const BlogForm = () => {
 };
 
 export default BlogForm;
-

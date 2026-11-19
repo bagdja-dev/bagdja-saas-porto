@@ -1,7 +1,7 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { FiFileText, FiBriefcase, FiMail, FiSettings, FiEye, FiTrendingUp, FiUsers, FiCalendar, FiActivity, FiLayout } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabase';
 import AdminNavbar from '../../components/AdminNavbar';
@@ -568,4 +568,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-

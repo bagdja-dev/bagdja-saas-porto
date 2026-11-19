@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { supabase } from '../services/supabase';
 import { getSubdomain, isSubdomain } from '../utils/subdomainHelper';
 
@@ -122,4 +122,3 @@ export const TenantProvider = ({ children }) => {
     </TenantContext.Provider>
   );
 };
-

@@ -10,7 +10,7 @@ import {
   FiGlobe,
   FiCode
 } from 'react-icons/fi';
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 
 const About = () => {
   const values = [
@@ -257,4 +257,3 @@ const About = () => {
 };
 
 export default About;
-

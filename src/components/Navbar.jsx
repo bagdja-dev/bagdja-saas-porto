@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router';
 import { FiMenu, FiX } from 'react-icons/fi';
 import { useState } from 'react';
 import DarkModeToggle from './DarkModeToggle';
@@ -84,4 +84,3 @@ const Navbar = () => {
 };
 
 export default Navbar;
-

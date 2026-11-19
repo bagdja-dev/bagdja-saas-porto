@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link } from 'react-router';
 import { FiExternalLink, FiGithub, FiEye } from 'react-icons/fi';
 import MediaGallery from './MediaGallery';
 import TechTag from './TechTag';
@@ -117,4 +117,3 @@ const ProjectCard = ({
 };
 
 export default ProjectCard;
-

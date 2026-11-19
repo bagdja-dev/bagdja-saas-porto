@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { FiPlus, FiEdit, FiTrash2, FiEye } from 'react-icons/fi';
 import { supabase } from '../../services/supabase';
 import BackButton from '../../components/BackButton';

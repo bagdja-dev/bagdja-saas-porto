@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router';
 import { useForm } from 'react-hook-form';
 import { FiLock, FiMail, FiUser, FiArrowLeft } from 'react-icons/fi';
 import { useAuth } from '../../context/AuthContext';
@@ -227,4 +227,3 @@ const Register = () => {
 };
 
 export default Register;
-
