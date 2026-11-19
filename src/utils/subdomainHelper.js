@@ -15,54 +15,37 @@
  */
 export const getSubdomain = () => {
   if (typeof window === 'undefined') return null;
-  
-  const hostname = window.location.hostname;
-  
-  console.log('[SubdomainHelper] Checking hostname:', hostname);
-  
-  // Handle localhost and IP addresses
+
+  const hostname = window.location.hostname.toLowerCase().replace(/\.$/, '');
+
   if (
-    hostname === 'localhost' || 
-    hostname.includes('127.0.0.1') || 
+    hostname === 'localhost' ||
+    hostname.includes('127.0.0.1') ||
     hostname.includes('192.168.') ||
-    /^\d+\.\d+\.\d+\.\d+$/.test(hostname) // IP address pattern
+    /^\d+\.\d+\.\d+\.\d+$/.test(hostname) ||
+    hostname.includes('.vercel.app')
   ) {
-    console.log('[SubdomainHelper] Localhost detected - no subdomain');
     return null;
   }
-  
-  // Handle Vercel preview URLs (e.g., my-porto-git-main-user.vercel.app)
-  if (hostname.includes('.vercel.app')) {
-    console.log('[SubdomainHelper] Vercel preview URL - no subdomain');
-    return null;
-  }
-  
-  // Split hostname into parts
-  const parts = hostname.split('.');
-  console.log('[SubdomainHelper] Hostname parts:', parts);
-  
-  // Need at least 3 parts for subdomain: [subdomain].[domain].[tld]
-  // Or 4+ for: [subdomain].[domain].[domain].[tld] (e.g., poppy.porto.bagdja.com)
-  if (parts.length < 3) {
-    console.log('[SubdomainHelper] Not enough parts for subdomain');
-    return null;
-  }
-  
-  // Get first part (potential subdomain)
-  const potentialSubdomain = parts[0];
-  console.log('[SubdomainHelper] Potential subdomain:', potentialSubdomain);
-  
-  // Exclude common non-tenant subdomains
-  const excludedSubdomains = ['www', 'porto', 'admin', 'api', 'cdn', 'assets'];
-  
-  if (excludedSubdomains.includes(potentialSubdomain)) {
-    console.log('[SubdomainHelper] Subdomain excluded:', potentialSubdomain);
-    return null;
-  }
-  
-  // Valid subdomain found
-  console.log('[SubdomainHelper] ✅ Valid subdomain found:', potentialSubdomain);
-  return potentialSubdomain;
+
+  const configuredBase = (import.meta.env.VITE_TENANT_BASE_DOMAIN || 'porto.bagdja.com')
+    .toLowerCase()
+    .replace(/^https?:\/\//, '')
+    .replace(/\.$/, '')
+    .replace(/\/$/, '');
+
+  if (hostname === configuredBase) return null;
+
+  const suffix = `.${configuredBase}`;
+  if (!hostname.endsWith(suffix)) return null;
+
+  const subdomain = hostname.slice(0, -suffix.length);
+  if (!subdomain || subdomain.includes('.') || subdomain === 'www') return null;
+
+  const excludedSubdomains = ['admin', 'api', 'cdn', 'assets', 'porto'];
+  if (excludedSubdomains.includes(subdomain)) return null;
+
+  return subdomain;
 };
 
 /**

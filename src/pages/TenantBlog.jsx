@@ -7,9 +7,11 @@ import { useTenant } from '../context/TenantContext';
 import SearchBar from '../components/SearchBar';
 import { setFavicon, resetFavicon } from '../utils/faviconHelper';
 import { getTextPreview, stripHtml } from '../utils/textHelpers';
+import { getSubdomain } from '../utils/subdomainHelper';
 
 const TenantBlog = () => {
-  const { slug } = useParams();
+  const { slug: routeSlug } = useParams();
+  const slug = routeSlug || getSubdomain();
   const { hasLandingPage } = useTenant();
   const [portfolio, setPortfolio] = useState(null);
   const [posts, setPosts] = useState([]);
@@ -358,4 +360,3 @@ const TenantBlog = () => {
 };
 
 export default TenantBlog;
-

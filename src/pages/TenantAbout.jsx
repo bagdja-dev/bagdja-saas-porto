@@ -6,9 +6,12 @@ import TenantNavbar from '../components/TenantNavbar';
 import { useTenant } from '../context/TenantContext';
 import TechTag from '../components/TechTag';
 import { setFavicon, resetFavicon } from '../utils/faviconHelper';
+import { getSubdomain } from '../utils/subdomainHelper';
+import { getCanonicalUrl, setSeoMeta, resetSeoMeta } from '../utils/seoHelper';
 
 const TenantAbout = () => {
-  const { slug } = useParams();
+  const { slug: routeSlug } = useParams();
+  const slug = routeSlug || getSubdomain();
   const { hasLandingPage } = useTenant();
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -19,7 +22,7 @@ const TenantAbout = () => {
     // Cleanup on unmount
     return () => {
       resetFavicon();
-      document.title = 'BagdjaPorto';
+      resetSeoMeta();
     };
   }, [slug]);
 
@@ -41,7 +44,30 @@ const TenantAbout = () => {
       } else {
         resetFavicon();
       }
-      document.title = `${data.name} - About`;
+      const canonicalUrl = getCanonicalUrl(data.slug, '/about');
+      const description = data.tagline || data.bio || `About ${data.name}`;
+      setSeoMeta({
+        title: `About ${data.name} — ${data.title || 'Professional Portfolio'} | BagdjaPorto`,
+        description,
+        url: canonicalUrl,
+        image: data.avatar_url,
+        type: 'profile',
+        jsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'AboutPage',
+          name: `About ${data.name}`,
+          url: canonicalUrl,
+          description,
+          mainEntity: {
+            '@type': 'Person',
+            name: data.name,
+            jobTitle: data.title,
+            description: data.bio,
+            image: data.avatar_url,
+            email: data.email,
+          },
+        },
+      });
     } catch (error) {
       console.error('Error fetching portfolio:', error);
     } finally {

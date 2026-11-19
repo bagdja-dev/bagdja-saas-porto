@@ -50,13 +50,13 @@ const SubdomainRouter = ({ children }) => {
     return (
       <Routes>
         {/* Root path on subdomain goes to landing page */}
-        <Route path="/" element={<LandingPageRenderer tenantSlug={subdomain} />} />
+        <Route path="/" element={<PublicPortfolio />} />
         
         {/* Tenant-specific routes */}
         <Route path="/projects" element={<PublicPortfolio />} />
-        <Route path="/project/:slug" element={<TenantProjectDetail />} />
+        <Route path="/project/:projectSlug" element={<TenantProjectDetail />} />
         <Route path="/blog" element={<TenantBlog />} />
-        <Route path="/blog/:slug" element={<TenantBlogDetail />} />
+        <Route path="/blog/:postSlug" element={<TenantBlogDetail />} />
         <Route path="/about" element={<TenantAbout />} />
         <Route path="/contact" element={<TenantContact />} />
         

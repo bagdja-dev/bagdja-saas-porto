@@ -10,9 +10,12 @@ import LandingPageRenderer from '../components/LandingPageRenderer';
 import { useTenant } from '../context/TenantContext';
 import { stripHtml } from '../utils/textHelpers';
 import { setFavicon, resetFavicon } from '../utils/faviconHelper';
+import { getSubdomain } from '../utils/subdomainHelper';
+import { getCanonicalUrl, setSeoMeta, resetSeoMeta } from '../utils/seoHelper';
 
 const PublicPortfolio = () => {
-  const { slug } = useParams();
+  const { slug: routeSlug } = useParams();
+  const slug = routeSlug || getSubdomain();
   const location = useLocation();
   const { hasLandingPage } = useTenant();
   const [portfolio, setPortfolio] = useState(null);
@@ -45,8 +48,31 @@ const PublicPortfolio = () => {
         resetFavicon();
       }
 
-      // Set page title
-      document.title = `${portfolio.name} - Portfolio`;
+      const canonicalUrl = getCanonicalUrl(portfolio.slug);
+      const description = portfolio.tagline || portfolio.bio || `${portfolio.name} professional portfolio`;
+      setSeoMeta({
+        title: `${portfolio.name} — ${portfolio.title || 'Portfolio'} | BagdjaPorto`,
+        description,
+        url: canonicalUrl,
+        image: portfolio.avatar_url || portfolio.cover_image,
+        type: 'profile',
+        jsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'ProfilePage',
+          name: portfolio.name,
+          url: canonicalUrl,
+          description,
+          primaryImageOfPage: portfolio.avatar_url || portfolio.cover_image,
+          about: {
+            '@type': 'Person',
+            name: portfolio.name,
+            jobTitle: portfolio.title,
+            description: portfolio.bio,
+            image: portfolio.avatar_url,
+            email: portfolio.email,
+          },
+        },
+      });
     }
 
     // Cleanup on unmount
@@ -58,9 +84,9 @@ const PublicPortfolio = () => {
       document.documentElement.style.removeProperty('--theme-text-secondary');
       document.documentElement.style.removeProperty('--theme-bg-light');
       document.documentElement.style.removeProperty('--theme-bg-dark');
-      // Reset favicon and title
+      // Reset favicon and SEO metadata
       resetFavicon();
-      document.title = 'BagdjaPorto';
+      resetSeoMeta();
     };
   }, [portfolio]);
 
@@ -163,7 +189,7 @@ const PublicPortfolio = () => {
   }
 
   // Check if we're on the home route and tenant has a landing page
-  const isHomeRoute = location.pathname === `/${slug}`;
+  const isHomeRoute = location.pathname === '/' || location.pathname === `/${slug}`;
   const shouldShowLandingPage = isHomeRoute && hasLandingPage;
 
   if (shouldShowLandingPage) {
@@ -576,4 +602,3 @@ const PublicPortfolio = () => {
 };
 
 export default PublicPortfolio;
-

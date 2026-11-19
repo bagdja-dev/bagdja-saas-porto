@@ -5,9 +5,12 @@ import { supabase } from '../services/supabase';
 import TenantNavbar from '../components/TenantNavbar';
 import { useTenant } from '../context/TenantContext';
 import { setFavicon, resetFavicon } from '../utils/faviconHelper';
+import { getSubdomain } from '../utils/subdomainHelper';
+import { getCanonicalUrl, setSeoMeta, resetSeoMeta, stripHtml, truncateSeoText } from '../utils/seoHelper';
 
 const TenantBlogDetail = () => {
-  const { slug, postSlug } = useParams();
+  const { slug: routeSlug, postSlug } = useParams();
+  const slug = routeSlug || getSubdomain();
   const navigate = useNavigate();
   const { hasLandingPage } = useTenant();
   const [portfolio, setPortfolio] = useState(null);
@@ -21,7 +24,7 @@ const TenantBlogDetail = () => {
     // Cleanup on unmount
     return () => {
       resetFavicon();
-      document.title = 'BagdjaPorto';
+      resetSeoMeta();
     };
   }, [slug, postSlug]);
 
@@ -57,8 +60,27 @@ const TenantBlogDetail = () => {
       if (postError) throw postError;
       setPost(postData);
       
-      // Set page title
-      document.title = `${postData.title} - ${portfolioData.name}`;
+      const canonicalUrl = getCanonicalUrl(portfolioData.slug, `/blog/${postData.slug || postSlug}`);
+      const description = postData.excerpt || truncateSeoText(stripHtml(postData.content));
+      setSeoMeta({
+        title: `${postData.title} — ${portfolioData.name} | BagdjaPorto`,
+        description,
+        url: canonicalUrl,
+        image: postData.cover_image,
+        type: 'article',
+        jsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: postData.title,
+          description,
+          image: postData.cover_image,
+          url: canonicalUrl,
+          author: { '@type': 'Person', name: portfolioData.name },
+          publisher: { '@type': 'Organization', name: 'BagdjaPorto' },
+          datePublished: postData.created_at,
+          dateModified: postData.updated_at,
+        },
+      });
 
       // Record page view
       await recordPageView(postData.id);

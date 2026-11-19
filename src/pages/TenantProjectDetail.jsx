@@ -8,9 +8,12 @@ import MediaGallery from '../components/MediaGallery';
 import TechTag from '../components/TechTag';
 import { setFavicon, resetFavicon } from '../utils/faviconHelper';
 import { stripHtml } from '../utils/textHelpers';
+import { getSubdomain } from '../utils/subdomainHelper';
+import { getCanonicalUrl, setSeoMeta, resetSeoMeta } from '../utils/seoHelper';
 
 const TenantProjectDetail = () => {
-  const { slug, projectSlug } = useParams();
+  const { slug: routeSlug, projectSlug } = useParams();
+  const slug = routeSlug || getSubdomain();
   const { hasLandingPage } = useTenant();
   const [portfolio, setPortfolio] = useState(null);
   const [project, setProject] = useState(null);
@@ -22,7 +25,7 @@ const TenantProjectDetail = () => {
 
     return () => {
       resetFavicon();
-      document.title = 'BagdjaPorto';
+      resetSeoMeta();
     };
   }, [slug, projectSlug]);
 
@@ -58,8 +61,27 @@ const TenantProjectDetail = () => {
       if (projectError) throw projectError;
       setProject(projectData);
 
-      // Set page title
-      document.title = `${projectData.title} - ${portfolioData.name}`;
+      const canonicalUrl = getCanonicalUrl(portfolioData.slug, `/project/${projectData.slug || projectSlug}`);
+      const description = projectData.excerpt || stripHtml(projectData.description).slice(0, 160);
+      setSeoMeta({
+        title: `${projectData.title} — ${portfolioData.name} | BagdjaPorto`,
+        description,
+        url: canonicalUrl,
+        image: projectData.featured_media,
+        type: 'article',
+        jsonLd: {
+          '@context': 'https://schema.org',
+          '@type': 'CreativeWork',
+          name: projectData.title,
+          headline: projectData.title,
+          description,
+          url: canonicalUrl,
+          image: projectData.featured_media,
+          author: { '@type': 'Person', name: portfolioData.name },
+          dateCreated: projectData.created_at,
+          dateModified: projectData.updated_at,
+        },
+      });
 
       // Record page view
       await recordPageView(projectData.id);

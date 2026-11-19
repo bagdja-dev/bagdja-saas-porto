@@ -7,9 +7,11 @@ import TenantNavbar from '../components/TenantNavbar';
 import { useTenant } from '../context/TenantContext';
 import { useAlert } from '../context/AlertContext';
 import { setFavicon, resetFavicon } from '../utils/faviconHelper';
+import { getSubdomain } from '../utils/subdomainHelper';
 
 const TenantContact = () => {
-  const { slug } = useParams();
+  const { slug: routeSlug } = useParams();
+  const slug = routeSlug || getSubdomain();
   const { hasLandingPage } = useTenant();
   const [portfolio, setPortfolio] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -276,4 +278,3 @@ const TenantContact = () => {
 };
 
 export default TenantContact;
-
