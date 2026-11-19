@@ -7,6 +7,9 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
   return {
+    ssr: {
+      noExternal: ['react-router-dom'],
+    },
     plugins: [
       reactRouter(),
       {
