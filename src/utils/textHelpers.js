@@ -1,3 +1,22 @@
+const namedHtmlEntities = {
+  amp: '&',
+  apos: "'",
+  copy: '©',
+  gt: '>',
+  hellip: '…',
+  ldquo: '“',
+  lsquo: '‘',
+  lt: '<',
+  mdash: '—',
+  nbsp: ' ',
+  ndash: '–',
+  quot: '"',
+  rdquo: '”',
+  reg: '®',
+  rsquo: '’',
+  trade: '™',
+};
+
 /**
  * Strip HTML tags from string and return plain text
  * @param {string} html - HTML string
@@ -5,13 +24,21 @@
  */
 export const stripHtml = (html) => {
   if (!html) return '';
-  
-  // Create a temporary div to parse HTML
-  const tmp = document.createElement('div');
-  tmp.innerHTML = html;
-  
-  // Get text content (automatically strips HTML)
-  return tmp.textContent || tmp.innerText || '';
+
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (entity, reference) => {
+      if (reference[0] !== '#') return namedHtmlEntities[reference.toLowerCase()] ?? entity;
+
+      const codePoint = reference[1].toLowerCase() === 'x'
+        ? Number.parseInt(reference.slice(2), 16)
+        : Number.parseInt(reference.slice(1), 10);
+      return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+        ? String.fromCodePoint(codePoint)
+        : entity;
+    })
+    .replace(/\s+/g, ' ')
+    .trim();
 };
 
 /**

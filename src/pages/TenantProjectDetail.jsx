@@ -11,23 +11,33 @@ import { stripHtml } from '../utils/textHelpers';
 import { getSubdomain } from '../utils/subdomainHelper';
 import { getCanonicalUrl, setSeoMeta, resetSeoMeta } from '../utils/seoHelper';
 
-const TenantProjectDetail = () => {
+const TenantProjectDetail = ({ initialData = null }) => {
   const { slug: routeSlug, projectSlug } = useParams();
-  const slug = routeSlug || getSubdomain();
-  const { hasLandingPage } = useTenant();
-  const [portfolio, setPortfolio] = useState(null);
-  const [project, setProject] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [viewCount, setViewCount] = useState(0);
+  const slug = routeSlug || initialData?.slug || getSubdomain();
+  const { hasLandingPage: contextHasLandingPage } = useTenant();
+  const hasLandingPage = initialData?.hasLandingPage ?? contextHasLandingPage;
+  const [portfolio, setPortfolio] = useState(initialData?.portfolio || null);
+  const [project, setProject] = useState(initialData?.project || null);
+  const [loading, setLoading] = useState(!initialData);
+  const [viewCount, setViewCount] = useState(initialData?.viewCount || 0);
 
   useEffect(() => {
+    if (initialData) {
+      recordPageView(initialData.project.id);
+      fetchViewCount(initialData.project.id);
+      return () => {
+        resetFavicon();
+        resetSeoMeta();
+      };
+    }
+
     fetchData();
 
     return () => {
       resetFavicon();
       resetSeoMeta();
     };
-  }, [slug, projectSlug]);
+  }, [slug, projectSlug, initialData]);
 
   const fetchData = async () => {
     try {

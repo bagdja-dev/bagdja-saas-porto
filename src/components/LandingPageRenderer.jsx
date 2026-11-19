@@ -7,15 +7,28 @@ import {
 import ProjectCard from './ProjectCard';
 import BlogCard from './BlogCard';
 
-const LandingPageRenderer = ({ userId = null, tenantSlug = null }) => {
-  const [landingPage, setLandingPage] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [projects, setProjects] = useState({});
-  const [posts, setPosts] = useState({});
+const getServiceColor = (index) => {
+  const colors = [
+    '#10b981',
+    '#f59e0b',
+    '#3b82f6',
+    '#8b5cf6',
+    '#ef4444',
+    '#06b6d4',
+  ];
+  return colors[Math.abs(index) % colors.length];
+};
+
+const LandingPageRenderer = ({ userId = null, tenantSlug = null, initialData = null }) => {
+  const [landingPage, setLandingPage] = useState(initialData?.landingPage || null);
+  const [loading, setLoading] = useState(!initialData);
+  const [projects, setProjects] = useState(initialData?.projects || {});
+  const [posts, setPosts] = useState(initialData?.posts || {});
 
   useEffect(() => {
+    if (initialData) return;
     fetchLandingPage();
-  }, [userId, tenantSlug]);
+  }, [userId, tenantSlug, initialData]);
 
   // Fetch projects by IDs
   const fetchProjects = async (projectIds, pageUserId) => {
@@ -67,18 +80,6 @@ const LandingPageRenderer = ({ userId = null, tenantSlug = null }) => {
     } catch (error) {
       console.error('Error fetching posts:', error);
     }
-  };
-
-  const getServiceColor = (index) => {
-    const colors = [
-      '#10b981', // Green
-      '#f59e0b', // Orange  
-      '#3b82f6', // Blue
-      '#8b5cf6', // Purple
-      '#ef4444', // Red
-      '#06b6d4'  // Cyan
-    ];
-    return colors[Math.abs(index) % colors.length];
   };
 
   const fetchLandingPage = async () => {
@@ -707,7 +708,7 @@ const ComponentRenderer = ({ component, tenantSlug, projects, posts }) => {
             <div 
               className="parallax-content"
               style={{ 
-                transform: `translateY(${window.scrollY * (component.data?.speed || 0.5)}px)`
+                transform: `translateY(${(typeof window === 'undefined' ? 0 : window.scrollY) * (component.data?.speed || 0.5)}px)`
               }}
             >
               {component.data?.content || 'Parallax content here'}

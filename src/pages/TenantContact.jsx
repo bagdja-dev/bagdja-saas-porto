@@ -9,17 +9,19 @@ import { useAlert } from '../context/AlertContext';
 import { setFavicon, resetFavicon } from '../utils/faviconHelper';
 import { getSubdomain } from '../utils/subdomainHelper';
 
-const TenantContact = () => {
+const TenantContact = ({ initialData = null }) => {
   const { slug: routeSlug } = useParams();
-  const slug = routeSlug || getSubdomain();
-  const { hasLandingPage } = useTenant();
-  const [portfolio, setPortfolio] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const slug = routeSlug || initialData?.slug || getSubdomain();
+  const { hasLandingPage: contextHasLandingPage } = useTenant();
+  const hasLandingPage = initialData?.hasLandingPage ?? contextHasLandingPage;
+  const [portfolio, setPortfolio] = useState(initialData?.portfolio || null);
+  const [loading, setLoading] = useState(!initialData);
   const [submitting, setSubmitting] = useState(false);
   const { success, error: showError } = useAlert();
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
 
   useEffect(() => {
+    if (initialData) return;
     fetchPortfolio();
     
     // Cleanup on unmount
@@ -27,7 +29,7 @@ const TenantContact = () => {
       resetFavicon();
       document.title = 'BagdjaPorto';
     };
-  }, [slug]);
+  }, [slug, initialData]);
 
   const fetchPortfolio = async () => {
     try {

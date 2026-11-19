@@ -13,20 +13,44 @@ import { setFavicon, resetFavicon } from '../utils/faviconHelper';
 import { getSubdomain } from '../utils/subdomainHelper';
 import { getCanonicalUrl, setSeoMeta, resetSeoMeta } from '../utils/seoHelper';
 
-const PublicPortfolio = () => {
+const PublicPortfolio = ({ initialData = null }) => {
   const { slug: routeSlug } = useParams();
-  const slug = routeSlug || getSubdomain();
+  const slug = routeSlug || initialData?.slug || getSubdomain();
   const location = useLocation();
-  const { hasLandingPage } = useTenant();
-  const [portfolio, setPortfolio] = useState(null);
-  const [projects, setProjects] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { hasLandingPage: contextHasLandingPage } = useTenant();
+  const hasLandingPage = initialData?.hasLandingPage ?? contextHasLandingPage;
+  const [portfolio, setPortfolio] = useState(initialData?.portfolio || null);
+  const [projects, setProjects] = useState(initialData?.projects || []);
+  const [loading, setLoading] = useState(!initialData);
   const [searchQuery, setSearchQuery] = useState('');
   const [notFound, setNotFound] = useState(false);
 
   useEffect(() => {
+    if (initialData) return;
     fetchPortfolioData();
-  }, [slug]);
+  }, [slug, initialData]);
+
+  useEffect(() => {
+    if (!initialData?.projects?.length) return;
+    let active = true;
+
+    Promise.all(initialData.projects.map(async (project) => {
+      const { count, error } = await supabase
+        .from('project_views')
+        .select('*', { count: 'exact', head: true })
+        .eq('project_id', project.id);
+      if (error) throw error;
+      return { ...project, view_count: count || 0 };
+    }))
+      .then((projectsWithViews) => {
+        if (active) setProjects(projectsWithViews);
+      })
+      .catch((error) => console.error('Error fetching project view counts:', error));
+
+    return () => {
+      active = false;
+    };
+  }, [initialData]);
 
 
   // Apply theme colors as CSS variables
@@ -199,7 +223,14 @@ const PublicPortfolio = () => {
         <TenantNavbar portfolio={portfolio} hasLandingPage={hasLandingPage} />
         
         {/* Landing Page Content */}
-        <LandingPageRenderer tenantSlug={slug} />
+        <LandingPageRenderer
+          tenantSlug={slug}
+          initialData={initialData ? {
+            landingPage: initialData.landingPage,
+            projects: initialData.landingProjects,
+            posts: initialData.landingPosts,
+          } : null}
+        />
       </div>
     );
   }

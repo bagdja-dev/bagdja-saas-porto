@@ -40,3 +40,6 @@ temp_interactive_push.bat
 
 # Graphify outputs
 graphify-out/
+build/
+.vercel/
+.react-router/

@@ -9,14 +9,16 @@ import { setFavicon, resetFavicon } from '../utils/faviconHelper';
 import { getSubdomain } from '../utils/subdomainHelper';
 import { getCanonicalUrl, setSeoMeta, resetSeoMeta } from '../utils/seoHelper';
 
-const TenantAbout = () => {
+const TenantAbout = ({ initialData = null }) => {
   const { slug: routeSlug } = useParams();
-  const slug = routeSlug || getSubdomain();
-  const { hasLandingPage } = useTenant();
-  const [portfolio, setPortfolio] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const slug = routeSlug || initialData?.slug || getSubdomain();
+  const { hasLandingPage: contextHasLandingPage } = useTenant();
+  const hasLandingPage = initialData?.hasLandingPage ?? contextHasLandingPage;
+  const [portfolio, setPortfolio] = useState(initialData?.portfolio || null);
+  const [loading, setLoading] = useState(!initialData);
 
   useEffect(() => {
+    if (initialData) return;
     fetchPortfolio();
     
     // Cleanup on unmount
@@ -24,7 +26,7 @@ const TenantAbout = () => {
       resetFavicon();
       resetSeoMeta();
     };
-  }, [slug]);
+  }, [slug, initialData]);
 
   const fetchPortfolio = async () => {
     try {
@@ -328,4 +330,3 @@ const TenantAbout = () => {
 };
 
 export default TenantAbout;
-

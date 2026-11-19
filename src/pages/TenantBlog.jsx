@@ -9,17 +9,19 @@ import { setFavicon, resetFavicon } from '../utils/faviconHelper';
 import { getTextPreview, stripHtml } from '../utils/textHelpers';
 import { getSubdomain } from '../utils/subdomainHelper';
 
-const TenantBlog = () => {
+const TenantBlog = ({ initialData = null }) => {
   const { slug: routeSlug } = useParams();
-  const slug = routeSlug || getSubdomain();
-  const { hasLandingPage } = useTenant();
-  const [portfolio, setPortfolio] = useState(null);
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [publishedPosts, setPublishedPosts] = useState([]);
+  const slug = routeSlug || initialData?.slug || getSubdomain();
+  const { hasLandingPage: contextHasLandingPage } = useTenant();
+  const hasLandingPage = initialData?.hasLandingPage ?? contextHasLandingPage;
+  const [portfolio, setPortfolio] = useState(initialData?.portfolio || null);
+  const [posts, setPosts] = useState(initialData?.posts || []);
+  const [loading, setLoading] = useState(!initialData);
+  const [publishedPosts, setPublishedPosts] = useState(initialData?.posts || []);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
+    if (initialData) return;
     fetchData();
     
     // Cleanup on unmount
@@ -27,7 +29,32 @@ const TenantBlog = () => {
       resetFavicon();
       document.title = 'BagdjaPorto';
     };
-  }, [slug]);
+  }, [slug, initialData]);
+
+  useEffect(() => {
+    if (!initialData?.posts?.length) return;
+    let active = true;
+
+    Promise.all(initialData.posts.map(async (post) => {
+      const { count, error } = await supabase
+        .from('blog_views')
+        .select('*', { count: 'exact', head: true })
+        .eq('post_id', post.id);
+      if (error) throw error;
+      return { ...post, view_count: count || 0 };
+    }))
+      .then((postsWithViews) => {
+        if (active) {
+          setPosts(postsWithViews);
+          setPublishedPosts(postsWithViews);
+        }
+      })
+      .catch((error) => console.error('Error fetching blog view counts:', error));
+
+    return () => {
+      active = false;
+    };
+  }, [initialData]);
 
   const fetchData = async () => {
     try {

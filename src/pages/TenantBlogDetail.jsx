@@ -8,17 +8,27 @@ import { setFavicon, resetFavicon } from '../utils/faviconHelper';
 import { getSubdomain } from '../utils/subdomainHelper';
 import { getCanonicalUrl, setSeoMeta, resetSeoMeta, stripHtml, truncateSeoText } from '../utils/seoHelper';
 
-const TenantBlogDetail = () => {
+const TenantBlogDetail = ({ initialData = null }) => {
   const { slug: routeSlug, postSlug } = useParams();
-  const slug = routeSlug || getSubdomain();
+  const slug = routeSlug || initialData?.slug || getSubdomain();
   const navigate = useNavigate();
-  const { hasLandingPage } = useTenant();
-  const [portfolio, setPortfolio] = useState(null);
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [viewCount, setViewCount] = useState(0);
+  const { hasLandingPage: contextHasLandingPage } = useTenant();
+  const hasLandingPage = initialData?.hasLandingPage ?? contextHasLandingPage;
+  const [portfolio, setPortfolio] = useState(initialData?.portfolio || null);
+  const [post, setPost] = useState(initialData?.post || null);
+  const [loading, setLoading] = useState(!initialData);
+  const [viewCount, setViewCount] = useState(initialData?.viewCount || 0);
 
   useEffect(() => {
+    if (initialData) {
+      recordPageView(initialData.post.id);
+      fetchViewCount(initialData.post.id);
+      return () => {
+        resetFavicon();
+        resetSeoMeta();
+      };
+    }
+
     fetchData();
     
     // Cleanup on unmount
@@ -26,7 +36,7 @@ const TenantBlogDetail = () => {
       resetFavicon();
       resetSeoMeta();
     };
-  }, [slug, postSlug]);
+  }, [slug, postSlug, initialData]);
 
   const fetchData = async () => {
     try {
